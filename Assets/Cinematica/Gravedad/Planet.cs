@@ -5,8 +5,10 @@ public class Planet : MonoBehaviour
     public SpaceShip spaceShip;
     
     public float gravitationalConstant = 0.5f;
-    public float mass = 100f;           
+    public float mass = 100f;
     public float gravityRadius = 50f;
+
+    bool inGravity;
     
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -20,15 +22,31 @@ public class Planet : MonoBehaviour
     {
         Vector3 direction = transform.position - spaceShip.transform.position;
         float distance = direction.magnitude;
-        
+
         if (distance < gravityRadius && distance > 0.1f)
         {
-            // Ley de la gravitación universal simplificada: F = G * (m1 * m2) / r^2
-            float forceMagnitude = gravitationalConstant * (mass * spaceShip.mass) / (distance * distance);
-            Vector3 force = direction.normalized * forceMagnitude;
-
-            // Aplica la fuerza de gravedad a la nave
-            spaceShip.ApplyGravity(force);
+            if (!inGravity)
+            {
+                inGravity = true;
+                spaceShip.currPlanets.Add(this);
+            }
         }
+        else
+        {
+            if (inGravity)
+            {
+                inGravity = false;
+                spaceShip.currPlanets.Remove(this);
+            }
+        }
+    }
+    
+    public Vector3 GetGravityForce()
+    {
+        Vector3 direction = transform.position - spaceShip.transform.position;
+        float distance = direction.magnitude;
+        float forceMagnitude = gravitationalConstant * (mass * spaceShip.mass) / (distance * distance);
+        Vector3 force = direction.normalized * forceMagnitude;
+        return force;
     }
 }

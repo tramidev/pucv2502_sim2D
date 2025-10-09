@@ -129,7 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 506889886}
   - component: {fileID: 506889885}
-  - component: {fileID: 506889884}
+  - component: {fileID: 506889887}
   m_Layer: 0
   m_Name: Planet
   m_TagString: Untagged
@@ -137,22 +137,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &506889884
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 506889883}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 095d69937c4a90a4db7106a8ea8ffa68, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  spaceShip: {fileID: 540411107}
-  gravitationalConstant: 0.5
-  mass: 100
-  gravityRadius: 3
 --- !u!212 &506889885
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -224,6 +208,21 @@ Transform:
   - {fileID: 1489246452}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &506889887
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 506889883}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fadcc71e1a86cd041befa9625f1887ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  nave: {fileID: 540411110}
+  mass: 20
+  influenceRadius: 3
 --- !u!1 &540411106
 GameObject:
   m_ObjectHideFlags: 0
@@ -234,7 +233,7 @@ GameObject:
   m_Component:
   - component: {fileID: 540411109}
   - component: {fileID: 540411108}
-  - component: {fileID: 540411107}
+  - component: {fileID: 540411110}
   m_Layer: 0
   m_Name: SpaceShip
   m_TagString: Untagged
@@ -242,21 +241,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &540411107
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 540411106}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 577fa4d21e1b1264588a3de7b53e3237, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  speed: 3
-  mass: 0.1
-  currPlanets: []
 --- !u!212 &540411108
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -328,6 +312,21 @@ Transform:
   - {fileID: 1865294694}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -90.574}
+--- !u!114 &540411110
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 540411106}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03b73ab48203e164c807e14fd569ab0c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speed: 2
+  mass: 1
+  planeta: {fileID: 0}
 --- !u!1 &976305061
 GameObject:
   m_ObjectHideFlags: 0
@@ -656,7 +655,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1765241798
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -669,9 +668,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 095d69937c4a90a4db7106a8ea8ffa68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spaceShip: {fileID: 540411107}
+  spaceShip: {fileID: 0}
   gravitationalConstant: 0.5
-  mass: 100
+  mass: 30
   gravityRadius: 2
 --- !u!212 &1765241799
 SpriteRenderer:
