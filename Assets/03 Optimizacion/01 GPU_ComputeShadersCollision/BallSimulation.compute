@@ -1,0 +1,97 @@
+#pragma kernel CSMain
+
+struct Ball
+{
+    float2 position;
+    float2 velocity;
+};
+
+RWStructuredBuffer<Ball> _Balls;
+
+cbuffer Params
+{
+    float _Radius;
+    uint  _BallCount;
+
+    float2 _AreaMin;
+    float2 _AreaMax;
+
+    float _DeltaTime;
+    float _Padding; // unused, just for 16-byte alignment (HLSL quirk)
+};
+
+[numthreads(64, 1, 1)]
+void CSMain (uint id : SV_DispatchThreadID)
+{
+    if (id >= _BallCount)
+        return;
+
+    Ball self = _Balls[id];
+
+    // 1) Integrate position
+    self.position += self.velocity * _DeltaTime;
+
+    // 2) Collide with walls (axis-aligned box)
+    // X walls
+    if (self.position.x - _Radius < _AreaMin.x)
+    {
+        self.position.x = _AreaMin.x + _Radius;
+        self.velocity.x *= -1.0f;
+    }
+    else if (self.position.x + _Radius > _AreaMax.x)
+    {
+        self.position.x = _AreaMax.x - _Radius;
+        self.velocity.x *= -1.0f;
+    }
+
+    // Y walls
+    if (self.position.y - _Radius < _AreaMin.y)
+    {
+        self.position.y = _AreaMin.y + _Radius;
+        self.velocity.y *= -1.0f;
+    }
+    else if (self.position.y + _Radius > _AreaMax.y)
+    {
+        self.position.y = _AreaMax.y - _Radius;
+        self.velocity.y *= -1.0f;
+    }
+
+    // 3) Ball–ball collisions (approximate, symmetric per ball)
+    float doubleR = _Radius * 2.0f;
+    float maxDistSq = doubleR * doubleR;
+
+    // For each other ball, if overlapping, push this ball out and
+    // reflect its velocity along the collision normal.
+    // Note: each thread only updates its own Ball (self),
+    // which keeps things simple (no race conditions).
+    for (uint j = 0; j < _BallCount; j++)
+    {
+        if (j == id)
+            continue;
+
+        Ball other = _Balls[j]; // read-only
+
+        float2 d = self.position - other.position;
+        float distSq = dot(d, d);
+
+        if (distSq > 0.0f && distSq < maxDistSq)
+        {
+            float dist = sqrt(distSq);
+            float2 n   = d / dist; // collision normal, from other -> self
+            float penetration = doubleR - dist;
+
+            // Push this ball away a bit to reduce overlap
+            self.position += n * (penetration * 0.5f);
+
+            // Reflect velocity along collision normal (simple elastic response)
+            float vn = dot(self.velocity, n);
+            if (vn < 0.0f) // only if moving *towards* the other ball
+            {
+                self.velocity -= 2.0f * vn * n;
+            }
+        }
+    }
+
+    // 4) Write back
+    _Balls[id] = self;
+}
