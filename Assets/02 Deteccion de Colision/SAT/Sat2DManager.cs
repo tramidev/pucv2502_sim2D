@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,31 +7,20 @@ public class Sat2DManager : MonoBehaviour
     [Tooltip("Si es true, divide el MTV entre 2 y mueve a ambos cuerpos; si es false, mueve solo el segundo.")]
     public bool pushBoth = true;
 
-    [Tooltip("Iteraciones de resolución por frame (útil si hay múltiples solapes).")]
-    public int solverIterations = 1;
-
     private List<Sat2DShape> shapes = new List<Sat2DShape>();
 
     private static Sat2DManager _instance;
 
     void Awake()
     {
-        shapes.Clear();
-        shapes.AddRange(FindObjectsOfType<Sat2DShape>());
         _instance = this;
     }
 
-    void LateUpdate()
+    private void FixedUpdate()
     {
-        shapes.Clear();
-        shapes.AddRange(FindObjectsOfType<Sat2DShape>());
-
-        for (int it = 0; it < solverIterations; it++)
-        {
-            ResolveAllPairs();
-        }
+        ResolveAllPairs();
     }
-
+    
     public static void AddToSATResolver(Sat2DShape shape)
     {
         _instance.shapes.Add(shape);
@@ -75,13 +65,6 @@ public class Sat2DManager : MonoBehaviour
                     if (polyVerts == null) continue;
 
                     res = SAT2D.CircleVsPolygon(c, r, polyVerts);
-
-                    // normal siempre A->B; si circ es A, estamos ok; si no, invertimos
-                    if (!A.IsCircle && B.IsCircle && res.collided)
-                    {
-                        res.normal = -res.normal;
-                        res.mtv = -res.mtv;
-                    }
                 }
 
                 if (res.collided)
@@ -96,10 +79,6 @@ public class Sat2DManager : MonoBehaviour
                     {
                         B.transform.position += (Vector3)res.mtv;
                     }
-
-                    // Luego de mover, que vuelvan a reconstruir su geometría
-                    A.RebuildShape();
-                    B.RebuildShape();
                 }
             }
         }
