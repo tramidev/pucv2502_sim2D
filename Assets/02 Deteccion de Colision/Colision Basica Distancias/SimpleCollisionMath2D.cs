@@ -4,7 +4,7 @@ using PUCV.PhysicEngine2D;
 using Unity.VisualScripting;
 using CustomCollider2D = PUCV.PhysicEngine2D.CustomCollider2D;
 
-public static class CollisionMath2D
+public static class SimpleCollisionMath2D
 {
     // -------- Helpers geométricos
     public static float Dot(Vector2 a, Vector2 b) => a.x * b.x + a.y * b.y;

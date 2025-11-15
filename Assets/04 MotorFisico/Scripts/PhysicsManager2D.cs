@@ -9,11 +9,11 @@ namespace PUCV.PhysicEngine2D
     {
         private static PhysicsManager2D _instance;
         private bool _registered;
-        private List<CustomRigidbody2D> _rigidbodies = new List<CustomRigidbody2D>();
+        private List<CustomCollider2D> _colliders = new List<CustomCollider2D>();
         
         //Per FixedUpdateList
         private List<InternalCollisionInfo> _currentCollisionList = new List<InternalCollisionInfo>();
-        private Dictionary<CustomRigidbody2D,InternalCollisionInfo> _collisionDict = new Dictionary<CustomRigidbody2D, InternalCollisionInfo>();
+        
 
         private void Awake()
         {
@@ -28,14 +28,14 @@ namespace PUCV.PhysicEngine2D
             DontDestroyOnLoad(_instance);
         }
 
-        public static void RegisterRigidbody(CustomRigidbody2D customRigidbody2D)
+        public static void RegisterCollider(CustomCollider2D customCollider2D)
         {
-            if(_instance) _instance._rigidbodies.Add(customRigidbody2D);
+            if(_instance) _instance._colliders.Add(customCollider2D);
         }
 
-        public static void UnregisterRigidbody(CustomRigidbody2D customRigidbody2D)
+        public static void UnregisterCollider(CustomCollider2D customCollider2D)
         {
-            if(_instance) _instance._rigidbodies.Remove(customRigidbody2D);
+            if(_instance) _instance._colliders.Remove(customCollider2D);
         }
 
         private void FixedUpdate()
@@ -43,20 +43,56 @@ namespace PUCV.PhysicEngine2D
             float deltaTime = Time.fixedDeltaTime;
             StepCalculateCollisions(deltaTime);
             StepInformCollisions(deltaTime);
+            StepApplyMTVAndReflectionToRigidbodies(deltaTime);
             StepApplyMovementToRigidbodies(deltaTime);
+        }
+
+        private void StepApplyMTVAndReflectionToRigidbodies(float deltaTime)
+        {
             
-            
+            foreach (var currCollisionInfo in _currentCollisionList)
+            {
+                var customRigidbody2DA = currCollisionInfo.bodyARigidbody;
+                var customRigidbody2DB = currCollisionInfo.bodyBRigidbody;
+                //Move rigidbodies according to MTV
+                /*
+                if (currCollisionInfo.hasMTV)
+                {
+                    if (customRigidbody2DA)
+                    {
+                        Vector2 position = customRigidbody2DA.GetWorldPosition();
+                        position += currCollisionInfo.mtvA;
+                        customRigidbody2DA.SetWoldPosition(position);
+                    }
+                    if (customRigidbody2DB)
+                    {
+                        Vector2 position = customRigidbody2DB.GetWorldPosition();
+                        position += currCollisionInfo.mtvB;
+                        customRigidbody2DB.SetWoldPosition(position);
+                    }
+                }
+                */
+                
+                //Reflect velocities
+                if (customRigidbody2DA)
+                {
+                    Vector2 velocity = customRigidbody2DA.velocity;
+                    velocity = currCollisionInfo.contactNormalAB.normalized*velocity.magnitude;
+                    customRigidbody2DA.velocity = velocity;
+                }
+                if (customRigidbody2DB)
+                {
+                    Vector2 velocity = customRigidbody2DB.velocity;
+                    velocity = currCollisionInfo.contactNormalBA*velocity.magnitude;
+                    customRigidbody2DB.velocity = velocity;
+                }
+            }
         }
 
         private void StepCalculateCollisions(float deltaTime)
         {
-            List<CustomCollider2D> colliders = new List<CustomCollider2D>();
-            foreach (CustomRigidbody2D rigidbody in _rigidbodies)
-            {
-                CustomCollider2D customCollider = rigidbody.GetCollider();
-                colliders.Add(customCollider);
-            }
-            var currCollisionList = CollisionMath2D.DetectCollisions(colliders);
+            //var currCollisionList = SimpleCollisionMath2D.DetectCollisions(colliders);
+            var currCollisionList = SAT2DMath.DetectCollisions(_colliders);
             
             //Check if collision was present last frame
             foreach (var currCollisionInfo in currCollisionList)
@@ -92,9 +128,11 @@ namespace PUCV.PhysicEngine2D
 
         void StepApplyMovementToRigidbodies(float deltaTime)
         {
-            if (_rigidbodies == null || _rigidbodies.Count == 0) return;
-            foreach (CustomRigidbody2D rigidbody in _rigidbodies)
+            if (_colliders == null || _colliders.Count == 0) return;
+            foreach (CustomCollider2D collider in _colliders)
             {
+                CustomRigidbody2D rigidbody = collider.rigidBody;
+                if (rigidbody == null) continue;
                 Vector2 rigidbodyPos = rigidbody.GetWorldPosition();
                 rigidbodyPos += rigidbody.velocity*deltaTime;
                 rigidbody.SetWoldPosition(rigidbodyPos);
@@ -110,6 +148,10 @@ namespace PUCV.PhysicEngine2D
         public CustomCollider2D bodyBCollider;
         public CustomRigidbody2D bodyBRigidbody;
         public bool wasCollidedLastFrame;
+        //Minimum Translation Vector
+        public bool hasMTV;
+        public Vector2 mtvA;
+        public Vector2 mtvB;
 
         public Vector2 contactPoint;
         public Vector2 contactNormalAB;
@@ -127,8 +169,8 @@ namespace PUCV.PhysicEngine2D
             bodyBCollider = colB;
             bodyBRigidbody = colB.rigidBody;
             contactPoint = point;
-            contactNormalAB = normal;
-            contactNormalBA = -normal;
+            contactNormalAB = -normal;
+            contactNormalBA = normal;
         }
 
         public CollisionInfo GetCollInfoForBodyA()

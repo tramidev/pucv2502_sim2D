@@ -61,7 +61,7 @@ public class CollisionManager2D : MonoBehaviour
         // Circle - Circle
         if (aKind == Shape2D.ShapeKind.Circle && bKind == Shape2D.ShapeKind.Circle)
         {
-            if (CollisionMath2D.CollideCircleCircle(A.Center, A.CircleRadius, B.Center, B.CircleRadius, out var p, out var n))
+            if (SimpleCollisionMath2D.CollideCircleCircle(A.Center, A.CircleRadius, B.Center, B.CircleRadius, out var p, out var n))
             {
                 contactPoint = p; normalFromAtoB = n; return true;
             }
@@ -73,7 +73,7 @@ public class CollisionManager2D : MonoBehaviour
         {
             var polyB = (bKind == Shape2D.ShapeKind.Rectangle) ? (IList<Vector2>)B.GetRectWorldVerts()
                                                                : (IList<Vector2>)B.GetTriangleWorldVerts();
-            if (CollisionMath2D.CollideCirclePolygon(A.Center, A.CircleRadius, polyB, out var p, out var n))
+            if (SimpleCollisionMath2D.CollideCirclePolygon(A.Center, A.CircleRadius, polyB, out var p, out var n))
             { contactPoint = p; normalFromAtoB = n; return true; }
             return false;
         }
@@ -81,7 +81,7 @@ public class CollisionManager2D : MonoBehaviour
         {
             var polyA = (aKind == Shape2D.ShapeKind.Rectangle) ? (IList<Vector2>)A.GetRectWorldVerts()
                                                                : (IList<Vector2>)A.GetTriangleWorldVerts();
-            if (CollisionMath2D.CollideCirclePolygon(B.Center, B.CircleRadius, polyA, out var p, out var n))
+            if (SimpleCollisionMath2D.CollideCirclePolygon(B.Center, B.CircleRadius, polyA, out var p, out var n))
             { contactPoint = p; normalFromAtoB = n; return true; }
             return false;
         }
@@ -95,7 +95,7 @@ public class CollisionManager2D : MonoBehaviour
             var polyB = (bKind == Shape2D.ShapeKind.Rectangle) ? (IList<Vector2>)B.GetRectWorldVerts()
                                                                : (IList<Vector2>)B.GetTriangleWorldVerts();
 
-            if (CollisionMath2D.CollidePolygonPolygon(polyA, polyB, out var p, out var n))
+            if (SimpleCollisionMath2D.CollidePolygonPolygon(polyA, polyB, out var p, out var n))
             { contactPoint = p; normalFromAtoB = n; return true; }
             return false;
         }

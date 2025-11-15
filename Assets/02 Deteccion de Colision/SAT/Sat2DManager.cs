@@ -36,7 +36,7 @@ public class Sat2DManager : MonoBehaviour
                 var A = shapes[i];
                 var B = shapes[j];
 
-                SAT2D.CollisionResult res;
+                SAT2DMath.Sat2DCollisionResult res;
 
                 if (!A.IsCircle && !B.IsCircle)
                 {
@@ -45,14 +45,14 @@ public class Sat2DManager : MonoBehaviour
                     var polyB = B.GetWorldPolygon();
                     if (polyA == null || polyB == null) continue;
 
-                    res = SAT2D.PolygonVsPolygon(polyA, polyB);
+                    res = SAT2DMath.PolygonVsPolygon(polyA, polyB);
                 }
                 else if (A.IsCircle && B.IsCircle)
                 {
                     // Círculo vs Círculo
                     A.GetCircle(out var cA, out var rA);
                     B.GetCircle(out var cB, out var rB);
-                    res = SAT2D.CircleVsCircle(cA, rA, cB, rB);
+                    res = SAT2DMath.CircleVsCircle(cA, rA, cB, rB);
                 }
                 else
                 {
@@ -64,7 +64,7 @@ public class Sat2DManager : MonoBehaviour
                     var polyVerts = poly.GetWorldPolygon();
                     if (polyVerts == null) continue;
 
-                    res = SAT2D.CircleVsPolygon(c, r, polyVerts);
+                    res = SAT2DMath.CircleVsPolygon(c, r, polyVerts);
                 }
 
                 if (res.collided)

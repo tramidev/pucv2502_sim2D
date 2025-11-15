@@ -28,8 +28,29 @@ namespace PUCV.PhysicEngine2D
         public Vector2 Center => (Vector2) transform.position;
         public Quaternion Rot => transform.rotation;
 
-        // ---- Suscripción automática al manager ----
-        private bool _registered = false;
+        private bool _registered;
+        private void Start()
+        {
+            RegisterToPhysicsManager();
+            rigidBody = GetComponent<CustomRigidbody2D>();
+            
+        }
+        
+        
+        private void RegisterToPhysicsManager()
+        {
+            if (_registered) return;
+            PhysicsManager2D.RegisterCollider(this);
+            
+            _registered = true;
+        }
+
+        private void UnregisterFromPhysicsManager()
+        {
+            if (!_registered) return;
+            PhysicsManager2D.UnregisterCollider(this);
+            _registered = false;
+        }
 
         // Radio del círculo en mundo
         public float CircleRadius

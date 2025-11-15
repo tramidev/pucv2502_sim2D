@@ -32,10 +32,12 @@ public class CollisionExample : MonoBehaviour,IHasCollider
         }
         _colorCoroutine = StartCoroutine(ChangeColor());
 
+        /*
         if (_rigidbody2D)
         {
             _rigidbody2D.velocity = collisionInfo.contactNormal * _rigidbody2D.velocity.magnitude;
         }
+        */
     }
     
     private IEnumerator ChangeColor()

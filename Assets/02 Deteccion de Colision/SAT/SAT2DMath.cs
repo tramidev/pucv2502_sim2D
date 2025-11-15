@@ -1,8 +1,12 @@
+using System.Collections.Generic;
+using System.Linq;
+using PUCV.PhysicEngine2D;
 using UnityEngine;
+using CustomCollider2D = PUCV.PhysicEngine2D.CustomCollider2D;
 
-public static class SAT2D
+public static class SAT2DMath
 {
-    public struct CollisionResult
+    public struct Sat2DCollisionResult
     {
         public bool collided;
         public Vector2 normal;   // Normal de colisión, apunta de A -> B
@@ -13,9 +17,9 @@ public static class SAT2D
     // ===================== PÚBLICO =====================
 
     // Polígono convexo vs Polígono convexo
-    public static CollisionResult PolygonVsPolygon(Vector2[] polyA, Vector2[] polyB)
+    public static Sat2DCollisionResult PolygonVsPolygon(Vector2[] polyA, Vector2[] polyB)
     {
-        CollisionResult res = new CollisionResult { collided = true, depth = float.PositiveInfinity };
+        Sat2DCollisionResult res = new Sat2DCollisionResult { collided = true, depth = float.PositiveInfinity };
         if (polyA == null || polyB == null || polyA.Length < 3 || polyB.Length < 3)
         {
             res.collided = false;
@@ -70,9 +74,9 @@ public static class SAT2D
     }
 
     // Círculo vs Círculo
-    public static CollisionResult CircleVsCircle(Vector2 cA, float rA, Vector2 cB, float rB)
+    public static Sat2DCollisionResult CircleVsCircle(Vector2 cA, float rA, Vector2 cB, float rB)
     {
-        CollisionResult res = new CollisionResult { collided = false, depth = 0f, normal = Vector2.zero, mtv = Vector2.zero };
+        Sat2DCollisionResult res = new Sat2DCollisionResult { collided = false, depth = 0f, normal = Vector2.zero, mtv = Vector2.zero };
         Vector2 ab = cB - cA;
         float dist = ab.magnitude;
         float r = rA + rB;
@@ -91,9 +95,9 @@ public static class SAT2D
     }
 
  
-    public static CollisionResult CircleVsPolygon(Vector2 c, float r, Vector2[] poly)
+    public static Sat2DCollisionResult CircleVsPolygon(Vector2 c, float r, Vector2[] poly)
     {
-        CollisionResult res = new CollisionResult { collided = true, depth = float.PositiveInfinity };
+        Sat2DCollisionResult res = new Sat2DCollisionResult { collided = true, depth = float.PositiveInfinity };
         if (poly == null || poly.Length < 3) { res.collided = false; return res; }
 
         Vector2 centerPoly = Centroid(poly);
@@ -266,5 +270,69 @@ public static class SAT2D
         float t = Vector2.Dot(p - a, ab) / abLen2;
         t = Mathf.Clamp01(t);
         return a + t * ab;
+    }
+    
+    public static List<InternalCollisionInfo> DetectCollisions(List<CustomCollider2D> colliders)
+    {
+        List<InternalCollisionInfo> collisions = new List<InternalCollisionInfo>();
+
+        for (int i = 0; i < colliders.Count; i++)
+        {
+            for (int j = i + 1; j < colliders.Count; j++)
+            {
+                CustomCollider2D colA = colliders[i];
+                CustomCollider2D colB = colliders[j];
+                
+                SAT2DMath.Sat2DCollisionResult res;
+
+                if (
+                    colA.type != CustomCollider2D.ShapeType.Circle && 
+                    colB.type != CustomCollider2D.ShapeType.Circle)
+                {
+                    // Polígono vs Polígono
+                    var polyA = colA.GetPolygonVertices().ToArray();
+                    var polyB = colB.GetPolygonVertices().ToArray();
+                    if (polyA == null || polyB == null) continue;
+
+                    res = SAT2DMath.PolygonVsPolygon(polyA, polyB);
+                }
+                else if (
+                    colA.type == CustomCollider2D.ShapeType.Circle && 
+                    colB.type == CustomCollider2D.ShapeType.Circle
+                    )
+                {
+                    // Círculo vs Círculo
+                    res = SAT2DMath.CircleVsCircle(
+                        colA.Center, 
+                        colA.CircleRadius, 
+                        colB.Center, 
+                        colB.CircleRadius
+                        );
+                }
+                else
+                {
+                    // Círculo vs Polígono
+                    CustomCollider2D circ = colA.type == CustomCollider2D.ShapeType.Circle ? colA : colB;
+                    CustomCollider2D poly  = colA.type == CustomCollider2D.ShapeType.Circle ? colB : colA;
+                    
+                    var polyVerts = poly.GetPolygonVertices().ToArray();
+                    if (polyVerts == null) continue;
+
+                    res = SAT2DMath.CircleVsPolygon(colA.Center,circ.CircleRadius, polyVerts);
+                }
+                
+                if (res.collided)
+                {
+                    //TODO: Calcular punto de contacto más preciso
+                    var collision = new InternalCollisionInfo(colA,colB,Vector2.zero,res.normal);
+                    collision.hasMTV = true;
+                    collision.mtvA = -res.mtv * 0.5f;
+                    collision.mtvB = res.mtv * 0.5f;
+                    collisions.Add(collision);
+                }
+            }
+        }
+
+        return collisions;
     }
 }
