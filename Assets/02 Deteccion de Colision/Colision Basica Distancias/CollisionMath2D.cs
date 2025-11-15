@@ -1,5 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
+using PUCV.PhysicEngine2D;
+using Unity.VisualScripting;
+using CustomCollider2D = PUCV.PhysicEngine2D.CustomCollider2D;
+
 public static class CollisionMath2D
 {
     // -------- Helpers geométricos
@@ -243,5 +247,87 @@ public static class CollisionMath2D
             }
         }
         return best;
+    }
+    
+    public static List<InternalCollisionInfo> DetectCollisions(List<CustomCollider2D> colliders)
+    {
+        List<InternalCollisionInfo> collisions = new List<InternalCollisionInfo>();
+
+        for (int i = 0; i < colliders.Count; i++)
+        {
+            for (int j = i + 1; j < colliders.Count; j++)
+            {
+                CustomCollider2D colA = colliders[i];
+                CustomCollider2D colB = colliders[j];
+                
+                bool collisionFound = false;
+                Vector2 point;
+                Vector2 normal;
+
+                if (colA.type == CustomCollider2D.ShapeType.Circle && colB.type == CustomCollider2D.ShapeType.Circle)
+                {
+                    if (CollideCircleCircle(
+                            colA.Center, 
+                            colA.CircleRadius, 
+                            colB.Center, 
+                            colB.CircleRadius, 
+                            out point, 
+                            out normal
+                            ))
+                    {
+                        collisionFound = true;
+                    }
+                }
+                else if(colA.type != CustomCollider2D.ShapeType.Circle && colB.type != CustomCollider2D.ShapeType.Circle)
+                {
+                    IList<Vector2> polyA = colA.GetPolygonVertices();
+                    IList<Vector2> polyB = colB.GetPolygonVertices();
+
+                    if (CollidePolygonPolygon(polyA, polyB, out point, out normal))
+                    {
+                        collisionFound = true;
+                    }
+                }
+                else
+                {
+                    if (colA.type == CustomCollider2D.ShapeType.Circle)
+                    {
+                        IList<Vector2> polyB = colB.GetPolygonVertices();
+                        if (CollideCirclePolygon(
+                                colA.Center, 
+                                colA.CircleRadius, 
+                                polyB, 
+                                out point,
+                                out normal)
+                            )
+                        {
+                            collisionFound = true;
+                        }
+                    }
+                    else
+                    {
+                        IList<Vector2> polyA = colA.GetPolygonVertices();
+                        if(CollideCirclePolygon(
+                               colB.Center, 
+                               colB.CircleRadius, 
+                               polyA,
+                                out point,
+                                out normal)
+                           )
+                        {
+                            collisionFound = true;
+                        }
+                    }
+                }
+                
+                if (collisionFound)
+                {
+                    var collision = new InternalCollisionInfo(colA,colB,point,normal);
+                    collisions.Add(collision);
+                }
+            }
+        }
+
+        return collisions;
     }
 }
