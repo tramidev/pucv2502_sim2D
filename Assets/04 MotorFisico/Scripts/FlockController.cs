@@ -35,7 +35,7 @@ namespace PUCV.PhysicEngine2D
         [SerializeField]
         private BoidSettings boidSettings = new BoidSettings();
         
-        private List<Boid> _birds = new List<Boid>();
+        private List<Bird> _birds = new List<Bird>();
 
         private void Awake()
         {
@@ -76,11 +76,18 @@ namespace PUCV.PhysicEngine2D
                 );
                 birdGO.transform.position = randomPos;
                 
-                // Crear componente Boid
-                Boid boid = birdGO.AddComponent<Boid>();
-                boid.Initialize(this, boidSettings);
+                // Obtener o crear CustomRigidbody2D
+                CustomRigidbody2D rigidbody = birdGO.GetComponent<CustomRigidbody2D>();
+                if (rigidbody == null)
+                {
+                    rigidbody = birdGO.AddComponent<CustomRigidbody2D>();
+                }
                 
-                _birds.Add(boid);
+                // Crear componente Bird
+                Bird bird = birdGO.AddComponent<Bird>();
+                bird.Initialize(rigidbody);
+                
+                _birds.Add(bird);
             }
         }
 
@@ -88,14 +95,172 @@ namespace PUCV.PhysicEngine2D
         {
             if (_birds.Count == 0) return;
             
-            // Actualizar cada pájaro
+            // Calcular fuerzas para todos los pájaros
             foreach (var bird in _birds)
             {
-                bird.UpdateBoid(_birds);
+                Vector2 separationForce = CalculateSeparation(bird);
+                Vector2 alignmentForce = CalculateAlignment(bird);
+                Vector2 cohesionForce = CalculateCohesion(bird);
+                Vector2 avoidBoundsForce = CalculateAvoidBounds(bird);
+                
+                // Aplicar fuerzas
+                bird.ApplyForces(separationForce, alignmentForce, cohesionForce, avoidBoundsForce, boidSettings);
+            }
+            
+            // Aplicar movimiento a todos los pájaros
+            foreach (var bird in _birds)
+            {
+                bird.UpdatePosition(boidSettings);
             }
         }
 
-        public List<Boid> GetAllBirds()
+        private Vector2 CalculateSeparation(Bird bird)
+        {
+            Vector2 steer = Vector2.zero;
+            int count = 0;
+            Vector2 myPos = bird.GetWorldPosition();
+            
+            foreach (var other in _birds)
+            {
+                if (other == bird) continue;
+                
+                Vector2 otherPos = other.GetWorldPosition();
+                float distance = Vector2.Distance(myPos, otherPos);
+                
+                if (distance < boidSettings.separationRadius && distance > 0)
+                {
+                    Vector2 diff = (myPos - otherPos).normalized;
+                    diff /= distance;
+                    steer += diff;
+                    count++;
+                }
+            }
+            
+            if (count > 0)
+            {
+                steer /= count;
+                if (steer.magnitude > 0)
+                {
+                    steer = steer.normalized * boidSettings.maxSpeed - bird.GetVelocity();
+                    if (steer.magnitude > boidSettings.maxForce)
+                    {
+                        steer = steer.normalized * boidSettings.maxForce;
+                    }
+                }
+            }
+            
+            return steer;
+        }
+
+        private Vector2 CalculateAlignment(Bird bird)
+        {
+            Vector2 avgVelocity = Vector2.zero;
+            int count = 0;
+            Vector2 myPos = bird.GetWorldPosition();
+            
+            foreach (var other in _birds)
+            {
+                if (other == bird) continue;
+                
+                Vector2 otherPos = other.GetWorldPosition();
+                float distance = Vector2.Distance(myPos, otherPos);
+                
+                if (distance < boidSettings.alignmentRadius)
+                {
+                    avgVelocity += other.GetVelocity();
+                    count++;
+                }
+            }
+            
+            if (count > 0)
+            {
+                avgVelocity /= count;
+                avgVelocity = avgVelocity.normalized * boidSettings.maxSpeed;
+                Vector2 steer = avgVelocity - bird.GetVelocity();
+                
+                if (steer.magnitude > boidSettings.maxForce)
+                {
+                    steer = steer.normalized * boidSettings.maxForce;
+                }
+                return steer;
+            }
+            
+            return Vector2.zero;
+        }
+
+        private Vector2 CalculateCohesion(Bird bird)
+        {
+            Vector2 centerMass = Vector2.zero;
+            int count = 0;
+            Vector2 myPos = bird.GetWorldPosition();
+            
+            foreach (var other in _birds)
+            {
+                if (other == bird) continue;
+                
+                Vector2 otherPos = other.GetWorldPosition();
+                float distance = Vector2.Distance(myPos, otherPos);
+                
+                if (distance < boidSettings.cohesionRadius)
+                {
+                    centerMass += otherPos;
+                    count++;
+                }
+            }
+            
+            if (count > 0)
+            {
+                centerMass /= count;
+                Vector2 direction = (centerMass - myPos).normalized;
+                Vector2 steer = direction * boidSettings.maxSpeed - bird.GetVelocity();
+                
+                if (steer.magnitude > boidSettings.maxForce)
+                {
+                    steer = steer.normalized * boidSettings.maxForce;
+                }
+                return steer;
+            }
+            
+            return Vector2.zero;
+        }
+
+        private Vector2 CalculateAvoidBounds(Bird bird)
+        {
+            Vector2 steer = Vector2.zero;
+            float avoidDistance = 5f;
+            Vector2 currentPos = bird.GetWorldPosition();
+
+            if (currentPos.x < boidSettings.boundsMin.x + avoidDistance)
+            {
+                steer.x += 1f;
+            }
+            if (currentPos.x > boidSettings.boundsMax.x - avoidDistance)
+            {
+                steer.x -= 1f;
+            }
+
+            if (currentPos.y < boidSettings.boundsMin.y + avoidDistance)
+            {
+                steer.y += 1f;
+            }
+            if (currentPos.y > boidSettings.boundsMax.y - avoidDistance)
+            {
+                steer.y -= 1f;
+            }
+
+            if (steer.magnitude > 0)
+            {
+                steer = steer.normalized * boidSettings.maxSpeed - bird.GetVelocity();
+                if (steer.magnitude > boidSettings.maxForce)
+                {
+                    steer = steer.normalized * boidSettings.maxForce;
+                }
+            }
+
+            return steer;
+        }
+
+        public List<Bird> GetAllBirds()
         {
             return _birds;
         }
