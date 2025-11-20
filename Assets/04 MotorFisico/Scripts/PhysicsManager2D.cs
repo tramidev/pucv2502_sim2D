@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace PUCV.PhysicEngine2D
@@ -13,7 +11,6 @@ namespace PUCV.PhysicEngine2D
         
         //Per FixedUpdateList
         private List<InternalCollisionInfo> _currentCollisionList = new List<InternalCollisionInfo>();
-        
 
         private void Awake()
         {
@@ -42,9 +39,9 @@ namespace PUCV.PhysicEngine2D
         {
             float deltaTime = Time.fixedDeltaTime;
             StepCalculateCollisions(deltaTime);
-            StepInformCollisions(deltaTime);
             StepApplyMTVAndReflectionToRigidbodies(deltaTime);
             StepApplyMovementToRigidbodies(deltaTime);
+            StepInformCollisions(deltaTime);
         }
 
         private void StepApplyMTVAndReflectionToRigidbodies(float deltaTime)
@@ -55,7 +52,7 @@ namespace PUCV.PhysicEngine2D
                 var customRigidbody2DA = currCollisionInfo.bodyARigidbody;
                 var customRigidbody2DB = currCollisionInfo.bodyBRigidbody;
                 //Move rigidbodies according to MTV
-                /*
+                
                 if (currCollisionInfo.hasMTV)
                 {
                     if (customRigidbody2DA)
@@ -71,7 +68,7 @@ namespace PUCV.PhysicEngine2D
                         customRigidbody2DB.SetWoldPosition(position);
                     }
                 }
-                */
+                
                 
                 //Reflect velocities
                 if (customRigidbody2DA)
@@ -91,7 +88,7 @@ namespace PUCV.PhysicEngine2D
 
         private void StepCalculateCollisions(float deltaTime)
         {
-            //var currCollisionList = SimpleCollisionMath2D.DetectCollisions(colliders);
+            //var currCollisionList = SimpleCollisionMath2D.DetectCollisions(_colliders);
             var currCollisionList = SAT2DMath.DetectCollisions(_colliders);
             
             //Check if collision was present last frame

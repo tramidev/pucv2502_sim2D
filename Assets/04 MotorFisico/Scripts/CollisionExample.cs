@@ -4,7 +4,7 @@ using PUCV.PhysicEngine2D;
 using UnityEngine;
 using CustomCollider2D = PUCV.PhysicEngine2D.CustomCollider2D;
 
-public class CollisionExample : MonoBehaviour,IHasCollider
+public class CollisionExample : MonoBehaviour, IHasCollider
 {
     private SpriteRenderer _spriteRenderer;
     private Coroutine _colorCoroutine;

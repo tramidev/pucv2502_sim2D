@@ -7,11 +7,8 @@ namespace PUCV.PhysicEngine2D
     public class CustomRigidbody2D : MonoBehaviour
     {
         public Vector2 velocity;
-
         
         private CustomCollider2D _customCollider;
-
-        
 
         public Vector2 GetWorldPosition()
         {

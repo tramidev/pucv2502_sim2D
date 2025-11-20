@@ -132,7 +132,7 @@ public static class SAT2DMath
 
         // 2) Eje adicional: desde el centro del círculo al punto MÁS CERCANO del polígono
         Vector2 closest = ClosestPointOnPolygon(c, poly, out int _);
-        Vector2 axisExtra = (closest - c);
+        Vector2 axisExtra = (c - closest);
         if (axisExtra.sqrMagnitude > 1e-12f)
         {
             axisExtra.Normalize();
@@ -318,7 +318,7 @@ public static class SAT2DMath
                     var polyVerts = poly.GetPolygonVertices().ToArray();
                     if (polyVerts == null) continue;
 
-                    res = SAT2DMath.CircleVsPolygon(colA.Center,circ.CircleRadius, polyVerts);
+                    res = SAT2DMath.CircleVsPolygon(circ.Center, circ.CircleRadius, polyVerts);
                 }
                 
                 if (res.collided)
