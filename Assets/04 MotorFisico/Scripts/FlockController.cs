@@ -23,6 +23,8 @@ namespace PUCV.PhysicEngine2D
             public Vector2 boundsMax = new Vector2(50, 50);
         }
 
+        public Camera gameCamera;
+
         [SerializeField]
         private int flockSize = 300;
         
@@ -69,9 +71,11 @@ namespace PUCV.PhysicEngine2D
                 birdGO.transform.localScale = Vector3.one * birdSize;
                 
                 // Posición aleatoria
+                Vector2 min = GetCurrentBoundsMin();
+                Vector2 max = GetCurrentBoundsMax();
                 Vector3 randomPos = new Vector3(
-                    Random.Range(-10f, 10f),
-                    Random.Range(-10f, 10f),
+                    Random.Range(min.x, max.x),
+                    Random.Range(min.y, max.y),
                     0
                 );
                 birdGO.transform.position = randomPos;
@@ -227,23 +231,38 @@ namespace PUCV.PhysicEngine2D
         private Vector2 CalculateAvoidBounds(Bird bird)
         {
             Vector2 steer = Vector2.zero;
-            float avoidDistance = 5f;
+            float avoidDistance = 1f;
             Vector2 currentPos = bird.GetWorldPosition();
 
-            if (currentPos.x < boidSettings.boundsMin.x + avoidDistance)
+            Vector2 boundsMin;
+            Vector2 boundsMax;
+
+            if (gameCamera.orthographic)
+            {
+                boundsMin = GetCurrentBoundsMin();
+                boundsMax = GetCurrentBoundsMax();
+            }
+            else
+            {
+                // Fallback a los bounds definidos en settings
+                boundsMin = boidSettings.boundsMin;
+                boundsMax = boidSettings.boundsMax;
+            }
+
+            if (currentPos.x < boundsMin.x + avoidDistance)
             {
                 steer.x += 1f;
             }
-            if (currentPos.x > boidSettings.boundsMax.x - avoidDistance)
+            if (currentPos.x > boundsMax.x - avoidDistance)
             {
                 steer.x -= 1f;
             }
 
-            if (currentPos.y < boidSettings.boundsMin.y + avoidDistance)
+            if (currentPos.y < boundsMin.y + avoidDistance)
             {
                 steer.y += 1f;
             }
-            if (currentPos.y > boidSettings.boundsMax.y - avoidDistance)
+            if (currentPos.y > boundsMax.y - avoidDistance)
             {
                 steer.y -= 1f;
             }
@@ -259,15 +278,34 @@ namespace PUCV.PhysicEngine2D
 
             return steer;
         }
-
-        public List<Bird> GetAllBirds()
+        
+        Vector2 GetCurrentBoundsMin()
         {
-            return _birds;
+            if (gameCamera.orthographic)
+            {
+                float halfHeight = gameCamera.orthographicSize;
+                float halfWidth = halfHeight * gameCamera.aspect;
+                Vector3 camPos = gameCamera.transform.position;
+                return new Vector2(camPos.x - halfWidth, camPos.y - halfHeight);
+            }
+            else
+            {
+                return boidSettings.boundsMin;
+            }
         }
-
-        public BoidSettings GetBoidSettings()
-        {
-            return boidSettings;
+        
+        Vector2 GetCurrentBoundsMax(){
+            if (gameCamera.orthographic)
+            {
+                float halfHeight = gameCamera.orthographicSize;
+                float halfWidth = halfHeight * gameCamera.aspect;
+                Vector3 camPos = gameCamera.transform.position;
+                return new Vector2(camPos.x + halfWidth, camPos.y + halfHeight);
+            }
+            else
+            {
+                return boidSettings.boundsMax;
+            }
         }
     }
 }
